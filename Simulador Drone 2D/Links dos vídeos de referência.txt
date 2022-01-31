@@ -1,0 +1,8 @@
+Rotacionar player:
+https://www.youtube.com/watch?v=_TU6BEyBieE&ab_channel=DaFluffyPotato
+
+Playlist de Pygame: Criar jogo e movimentar player
+https://www.youtube.com/watch?v=i6xMBig-pP4&list=PLzMcBGfZo4-lp3jAExUCewBfMx3UZFkh5&ab_channel=TechWithTim
+
+Adicionar plano de fundo:
+https://www.youtube.com/watch?v=dGwmmBBMlKs&ab_channel=buildwithpython

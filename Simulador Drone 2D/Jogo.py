@@ -52,6 +52,11 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             exit()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # Drone's destiny: a (x, y) coordinate
+            mx, my = pygame.mouse.get_pos()
+            destino = (mx - drone.get_size()[0] / 2, my - drone.get_size()[1] / 2)
+            print(destino)
 
     # Gets the keys that are being pressed
     keys = pygame.key.get_pressed()

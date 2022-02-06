@@ -5,23 +5,23 @@ from PIL import Image
 import math
 
 class Tela:
-	def __init__(self):
+	def __init__(self, larg, alt, imagem_fundo ):
 		pygame.init()
 		pygame.display.set_caption("Simulador 2D de Drone")
         # Tamanho da janela
-		self.larg = 1000
-		self.alt = 640
+		self.larg = larg
+		self.alt = alt
 		# Load background image
-		self.background = pygame.image.load('Imagens/ghibli_background_resized.jpg')
+		self.imagem_fundo = imagem_fundo
+		self.background = pygame.image.load('Imagens/Imagem_fundo_resized.jpg')
 		self.tela = pygame.display.set_mode((self.larg, self.alt))
        
 	def desenha_tela(self):
 		#Resizing background image to match the screen size
-		image = Image.open('Imagens/ghibli_background.jpg')
+		image = Image.open(imagem_fundo)
 		image = image.resize((self.larg, self.alt))
-		image.save('Imagens/ghibli_background_resized.jpg')
-		return self.larg
-		return self.alt
+		image.save('Imagens/Imagem_fundo_resized.jpg')
+
 
 	def plot(self,x,y):
 		self.tela.blit(x,y)
@@ -32,14 +32,16 @@ class Tela:
 			self.tela.blit(self.background, (0, 0))  # Load the bg at the (0, 0) position of the screen
 
 class Drone:
-	def __init__(self,position,angle):
+	def __init__(self,position,angle,vel,imagem_drone):
 		self.position = position
 		self.posX = position[0]
 		self.posY = position[1]
-		self.angle = angle 		
+		self.angle = angle
+		self.vel = vel 		
 		self.drone = 0
-		self.tela = Tela()
+		
 		# Load drone image
+		self.imagem_drone = imagem_drone
 		self.drone = pygame.image.load('Imagens/drone_resized.png')
 		self.tamX = self.drone.get_size()[0]
 		self.tamY = self.drone.get_size()[0]
@@ -47,11 +49,11 @@ class Drone:
 
 	def desenha_drone(self):
 		# Resizing player image
-		image = Image.open('Imagens/drone.png')
+		image = Image.open(imagem_drone)
 		image = image.resize((100, 50))
 		image.save('Imagens/drone_resized.png')
 	
-	def drone_update(self,position):
+	def drone_update(self):
 		# Load drone image
 		self.drone = pygame.image.load('Imagens/drone_resized.png')
 		# Rotating drone
@@ -59,9 +61,8 @@ class Drone:
 		self.height = drone_rotated.get_height()/2
 		drone_rotated_pos = (self.position[0] - drone_rotated.get_width() / 2, self.position[1] - self.height)
 		# spawn drone
-		self.tela.plot(drone_rotated, drone_rotated_pos)
-		return self.position
-		#print(self.position)
+		tela.plot(drone_rotated, drone_rotated_pos)
+		
 
 class Controle:
 	def __init__(self):
@@ -71,11 +72,10 @@ class Controle:
 		self.posY = self.position[1]
 		self.vel = 8
 		self.angle = 0
-		self.tela = Tela()
-		self.drone = Drone(self.position,self.angle)
+		self.drone = Drone(self.position, self.angle, self.vel, imagem_drone)
 		# Screen limits (The screen size minus the player size)
-		self.xlim = self.tela.larg - self.drone.tamX / 30
-		self.ylim = self.tela.alt - self.drone.tamY * 1.5
+		self.xlim = tela.larg - self.drone.tamX / 30
+		self.ylim = tela.alt - self.drone.tamY * 1.5
 		self.keys = 0
 		# Boost control
 		self.v_up = 0
@@ -97,7 +97,7 @@ class Controle:
 		self.a_gravidade()	
 		
 		self.position = self.posX, self.posY
-		self.drone.drone_update(self.position)
+		drone.drone_update()
 
 
 	def left_button(self):
@@ -133,7 +133,7 @@ class Controle:
 	def a_gravidade(self):
 		g = 9.81 #gravidade
 		aux = self.drone.height
-		print(aux)
+		#print(aux)
 
 		# self.v_fall += -math.sqrt(self.vel_vertical ** 2 + 2 * g * (self.ylim - (self.posY - aux)))
 		# if self.v_fall <= -10:
@@ -147,20 +147,16 @@ class Controle:
 		mx, my = pygame.mouse.get_pos()
 		self.position = (mx - self.drone.tamX / 2, my - self.drone.tamY / 2)
 		print(self.position)
-		#self.drone.drone_update(self.position)
-
+		#drone.drone_update()
 
 
 class Game:
+	
 	def __init__(self):
 		self.clock = pygame.time.Clock()
 		self.ticks = 60
 		self.exit = False
-		self.tela = Tela()
-		self.controle = Controle()
-		self.drone = Drone(self.controle.position, self.controle.angle)
 		
-
 	def run(self):
 		while True:
 			self.clock.tick(30)  # Game FPS
@@ -173,19 +169,25 @@ class Game:
 					exit()
 					
 				if event.type == pygame.MOUSEBUTTONDOWN:
-					self.controle.mouse_control()
+					controle.mouse_control()
 
 
-			self.drone.position = self.controle.position
-			self.controle.key_control()
-			self.tela.update_tela()
-			self.drone.drone_update(self.controle.position)
+			drone.position = controle.position
+			controle.key_control()
+			tela.update_tela()
+			drone.drone_update()
 			pygame.display.update()
 
 
 
 if __name__ == '__main__':
 
+	imagem_fundo = 'Imagens/ghibli_background.jpg'
+	imagem_drone = 'Imagens/drone.png'
+	tela = Tela(1000,640,imagem_fundo)
+	controle = Controle()
+	drone = Drone(controle.position, controle.angle, controle.vel, imagem_drone)
+	
 	game = Game()
 	game.run()
 

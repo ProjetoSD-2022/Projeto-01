@@ -6,7 +6,7 @@ import math
 
 
 def main():
-    # Tamanho da janela
+    # Screen size
     larg = 1000
     alt = 640
 
@@ -34,26 +34,30 @@ def main():
     xlim = larg - drone.get_size()[0] / 2
     ylim = alt - drone.get_size()[1] * 1.5
 
-    # Movement, position and rotation parameters
-    vel = 8
-    posX = 500
-    posY = 540
+    # Movement and rotation parameters when the auto-stabilize is on
+    vel = 10
     angle = 0
-
-    # Drone objective position
-    destino = (posX - drone.get_size()[0] / 2, posY - drone.get_size()[1] / 2)
+    y_direction = 0  # changes the y direction to + or - depending on the direction key pressed
 
     # Gravity
     g = 9.8
 
-    # Boost control
-    v_up = 0
-    v_fall = 0
-    vel_vertical = 0
-    v_max = 18  # cm/s (1 px = 1 cm)
-    a_up = 10
+    # Drone's weight
+    m = 0.25
 
-    # Auto gravity control
+    # Boost impulse
+    F = 0
+    Fy = 0
+    Fx = 0
+
+    # Drone's position (Horizontal and vertical)
+    posH = 500
+    posV = 540
+
+    # Drone's destiny position
+    destino = (posH - drone.get_size()[0] / 2, posV - drone.get_size()[1] / 2)
+
+    # Auto stabilize control, makes the drone automaticaly control its y position
     steady = False
 
     # Game clock to control the FPS
@@ -61,8 +65,7 @@ def main():
 
     while True:
         clock.tick(30)  # Game FPS
-        t = clock.get_time() / 1000
-        # print('t: ', t)
+        t = clock.get_time() / 1000  # Time in seconds
 
         # Screen configuration
         tela.fill((0, 0, 0))  # Clean the last screen to update the frames
@@ -81,12 +84,12 @@ def main():
         # Gets the keys that are being pressed
         keys = pygame.key.get_pressed()
 
-        # Moving and limiting the player position on the screen
-        if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and posX > 0:
-            posX -= vel
+        # Moving the drone
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            posH -= vel
 
-        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and posX < xlim:
-            posX += vel
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            posH += vel
 
         if keys[K_f]:
             steady = True
@@ -94,43 +97,89 @@ def main():
             steady = False
 
         if steady:
-            if (keys[pygame.K_UP] or keys[pygame.K_w]) and posY > 0:
-                posY -= vel
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
+                y_direction = -1
+            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                y_direction = 1
+            else:
+                y_direction = 0
 
-            if (keys[pygame.K_DOWN] or keys[pygame.K_s]) and posY < ylim:
-                posY += vel
-
-        if keys[pygame.K_e]:
-            angle += 10
+        if keys[K_SPACE]:
+            # boost control, hold space to activate drone boost
+            F += 100*t
+            if F >= 155:
+                F = 155
+        else:
+            # when space is released, the boost is slowly decreased
+            F -= 100 * t
+            if F <= 0:
+                F = 0
 
         if keys[pygame.K_q]:
-            angle -= 10
+            angle += 5
 
-        if keys[K_SPACE] and posY > 0:
-            # Up velocity control
-            v_up += 0.1 * abs(vel_vertical) + a_up * t
-            if v_up >= v_max:
-                v_up = v_max
-        else:
-            v_up -= 2 * a_up * t
-            if v_up <= 0:
-                v_up = 0
+        if keys[pygame.K_e]:
+            angle -= 5
+
+        # Limit the max angle to 35°
+        if angle >= 35:
+           angle = 35
+        if angle <= -35:
+            angle = -35
 
         # Rotating drone
         drone_rotated = pygame.transform.rotate(drone, angle)
 
+        # FORCE
+        Fx = F * math.sin(angle * math.pi / 180)
+
         if not steady:
-            v_fall += -math.sqrt(vel_vertical ** 2 + 2 * g * (ylim - (posY - drone_rotated.get_height() / 2)))
-            if v_fall <= -10:
-                v_fall = -10
+            Fy = F*math.cos(angle * math.pi / 180)
+            vel -= 0.05
+            if vel <= 0:
+                vel = 0
+        else:
+            vel = 10
+            if Fy < m*g*31:
+                Fy += 50*t
+            if Fy > m * g * 31:
+                Fy -= 50 * t
+            if m*g*31 - 1 < Fy < m*g*31 + 1:
+                Fy = m*g*31
 
-            vel_vertical = - v_up - v_fall
-            posY += vel_vertical
+        ay = (Fy - m*g*31) / m
+        ax = Fx / m
 
-        if posY >= ylim:
-            posY = ylim
+        vel_vertical = -ay * t + vel*y_direction*math.cos(angle * math.pi / 180)
+        vel_horizontal = -ax * t - vel * math.sin(angle * math.pi / 180)
 
-        drone_rotated_pos = (posX - drone_rotated.get_width() / 2, posY - drone_rotated.get_height() / 2)
+        if vel_vertical >= 10:
+            vel_vertical = 10
+        elif vel_vertical <= -10:
+            vel_vertical = -10
+
+        if vel_horizontal >= 10:
+            vel_horizontal = 10
+        elif vel_horizontal <= -10:
+            vel_horizontal = -10
+
+        posV += vel_vertical
+        posH += vel_horizontal
+
+        # Limit the ground border
+        if posV >= ylim:
+            posV = ylim
+        if posV <= drone_rotated.get_height() / 2:
+            posV = drone_rotated.get_height() / 2
+
+        # Limit the left and right borders
+        if posH >= xlim:
+            posH = xlim
+        if posH <= drone_rotated.get_width() / 2:
+            posH = drone_rotated.get_width() / 2
+
+        drone_rotated_pos = (posH - drone_rotated.get_width() / 2, posV - drone_rotated.get_height() / 2)
+        # drone_rotated_pos = (posX - drone_rotated.get_width() / 2, posY - drone_rotated.get_height() / 2)
 
         # spawn drone
         tela.blit(drone_rotated, drone_rotated_pos)

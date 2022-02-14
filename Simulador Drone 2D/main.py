@@ -59,20 +59,20 @@ def main():
         tela.blit(image_drone, (50, 150)) # Load drone image
         
         # Creating a rect to get play click
-        button_1 = pygame.Rect(image_play_x, image_play_y, image_play_width, image_play_height)
+        rect_image_play = pygame.Rect(image_play_x, image_play_y, image_play_width, image_play_height)
         # Creating a rect to get play click
-        button_2 = pygame.Rect(image_credits_x, image_credits_y, image_credits_width, image_credits_height)
+        rect_image_credits = pygame.Rect(image_credits_x, image_credits_y, image_credits_width, image_credits_height)
 
         # Get mouse positions in mouse_x and mouse_y
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
         # Get click on image play
-        if button_1.collidepoint((mouse_x, mouse_y)):
+        if rect_image_play.collidepoint((mouse_x, mouse_y)):
             if click:
                 game() # Calls the function of the game in other file
                 #pass
         # Get click on image credits
-        if button_2.collidepoint((mouse_x, mouse_y)):
+        if rect_image_credits.collidepoint((mouse_x, mouse_y)):
             if click:
                 creditos() # Calls the function creditos responsible for screen credits
 
@@ -158,10 +158,10 @@ def creditos():
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
         # Creating a rect to get back click
-        button_1 = pygame.Rect(image_back_x, image_back_y, image_back_width, image_back_height)
+        rect_image_back = pygame.Rect(image_back_x, image_back_y, image_back_width, image_back_height)
 
         # Get click on image back
-        if button_1.collidepoint((mouse_x, mouse_y)):
+        if rect_image_back.collidepoint((mouse_x, mouse_y)):
             if click:
                 return # Returns to main function
 

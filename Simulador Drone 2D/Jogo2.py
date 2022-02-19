@@ -3,6 +3,8 @@ from pygame.locals import *
 from sys import exit
 from PIL import Image
 import math
+from PID import execute_PID
+import numpy as np
 
 
 class Tela:
@@ -111,6 +113,20 @@ class Controle:
 		self.steady = False
 		self.y_direction = 0  # changes the y direction to + or - depending on the direction key pressed
 
+		# Initializing control parameters
+		self.w1 = 0
+		self.w2 = 0
+		self.v1 = 0
+		self.v2 = 0
+		self.ang_vel = 0
+		self.x = np.array([self.w1, self.w2,
+					  self.posH, self.posV,
+					  self.v1, self.v2,
+					  self.angle * np.pi / 180.,
+					  self.ang_vel * np.pi / 180.])
+		self.eP = np.array([1, 1])  # Position error
+		self.ePhi = 2  # angle error
+
 	def move(self):
 		self.t = game.clock.get_time() / 1000
 		# Gets the keys that are being pressed        
@@ -129,6 +145,12 @@ class Controle:
 		
 		self.position = [self.posH, self.posV]
 		self.drone.drone_update(self.position, self.angle)
+
+		self.x = np.array([self.w1, self.w2,
+						self.posH, self.posV,
+						self.v1, self.v2,
+						self.angle * np.pi / 180.,
+						self.ang_vel * np.pi / 180.])
 
 	def left_button(self):
 		if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
@@ -233,13 +255,20 @@ class Controle:
 		if self.posH <= self.drone_rotated.get_width() / 2:
 			self.posH = self.drone_rotated.get_width() / 2
 
-
-	def mouse_control(self):
-		# Drone's destiny: a (x, y) coordinate
-		mx, my = pygame.mouse.get_pos()
-		self.position = [mx - self.drone.tamX / 2, my - self.drone.tamY / 2]
-		print(self.position)
-		#drone.drone_update()
+	def mouse_control(self, mx, my):
+		if np.abs(self.eP[0]) > 0.2 or np.abs(self.eP[1]) > 0.2 or np.abs(self.ePhi) > 1.0:
+			self.x, self.eP, self.ePhi = execute_PID(self.x, [mx, my], t)
+			self.posH, self.posV = self.x[2], self.x[3]
+			self.angle = np.round(self.x[6]*180/np.pi)
+			self.v1, self.v2 = self.x[4], self.x[5]
+			self.w1, self.w2 = self.x[0], self.x[1]
+			self.ang_vel = self.x[7]
+			print(self.angle)
+			self.position = [self.posH, self.posV]
+			#print(self.position)
+			self.drone.drone_update(self.position, self.angle)
+			return True
+		return False
 
 
 class Game:
@@ -250,9 +279,12 @@ class Game:
 		self.exit = False
 		
 	def run(self):
+		global t
+		auto_move = False
+		mx, my = 0, 0
 		while True:
-			self.clock.tick(30)  # Game FPS
-
+			self.clock.tick(60)  # Game FPS
+			t = game.clock.get_time() / 1000
 			tela.update_tela()
 
 			for event in pygame.event.get():
@@ -262,9 +294,14 @@ class Game:
 					exit()
 					
 				if event.type == pygame.MOUSEBUTTONDOWN:
-					controle.mouse_control()
+					auto_move = True
+					mx, my = pygame.mouse.get_pos()
+					print(mx, my)
 
-			controle.move()
+			if auto_move:
+				auto_move = controle.mouse_control(mx, my)
+			else:
+				controle.move()
 			pygame.display.update()
 
 

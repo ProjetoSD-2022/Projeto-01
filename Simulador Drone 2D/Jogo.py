@@ -5,7 +5,7 @@ from PIL import Image
 import math
 
 
-def main():
+def game():
     # Screen size
     larg = 1000
     alt = 640
@@ -188,4 +188,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    game()

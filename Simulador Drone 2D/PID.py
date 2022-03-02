@@ -27,7 +27,7 @@ Tc_max = l * kf * w_max ** 2
 # Fc_max = 0.9 * Fc_max
 
 # PARÂMETROS DE SIMULAÇÃO
-h = 0.0166667  # passo da simulação de tempo continuo
+h = 4e-3  # passo da simulação de tempo continuo
 
 # Vetor de estados
 # x = [ w r_xy v_xy phi omega]' \in R^8
@@ -177,8 +177,8 @@ def execute_PID(x, destino, t):
     # Simulação um passo a frente
     #x = x_dot(t, x, w_)
     x = rk4(t, h, x, w_)
+    x = rk4(t, h, x, w_)
+    x = rk4(t, h, x, w_)
+    x = rk4(t, h, x, w_)
+    x = rk4(t, h, x, w_)
     return x, eP, ePhi
-
-
-if __name__ == '__main__':
-    execute_PID([10, 10], 0.033)

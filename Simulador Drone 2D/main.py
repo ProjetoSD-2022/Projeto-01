@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from sys import exit
 from PIL import Image
-from Jogo import *
+from Jogo_V0 import *
 
 def main():
     # Tamanho da janela

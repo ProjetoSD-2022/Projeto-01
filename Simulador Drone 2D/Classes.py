@@ -9,7 +9,10 @@ import numpy as np
 # Global Variables
 larg = 1000.0
 alt = 640.0
-
+global position_, angle_, velocidade
+position_ = 0
+angle_ = 0
+velocidade = 0
 
 class Screen:
 	def __init__(self, larg, alt, bg_image):
@@ -23,6 +26,8 @@ class Screen:
 		self.larg = larg
 		self.alt = alt
 		self.screen = pygame.display.set_mode((self.larg, self.alt))
+
+
 
 	def resize_screen_image(self):
 		# Resizing background image to match the screen size
@@ -38,6 +43,25 @@ class Screen:
 			self.screen.fill((0, 0, 0))  # Clean the last screen to update the frames
 			self.screen.blit(self.background, (0, 0))  # Load the bg at the (0, 0) position of the screen
 
+			# Fonte 
+			fonte = pygame.font.SysFont('arial', 15, True, True)
+			# Destino
+			texto = f'Destino do drone: ({mx_real}, {my_real})'
+			texto_formatado = fonte.render(texto, True, (255, 255, 255))
+			self.screen.blit(texto_formatado, (10, 10))
+			# Posição Atual
+			texto = f'Posição atual: {position_}'
+			texto_formatado = fonte.render(texto, True, (255, 255, 255))
+			self.screen.blit(texto_formatado, (10, 30))
+			# Velocidade Atual
+			texto = f'Velocidade atual: {velocidade}'
+			texto_formatado = fonte.render(texto, True, (255, 255, 255))
+			self.screen.blit(texto_formatado, (10, 50))
+			# Angulo Atual
+			texto = f'Ângulo: {angle_}'
+			texto_formatado = fonte.render(texto, True, (255, 255, 255))
+			self.screen.blit(texto_formatado, (10, 70))
+
 
 class Drone:
 	def __init__(self, position, angle, vel, drone_image):
@@ -47,7 +71,7 @@ class Drone:
 		self.posV = self.position[1]
 		self.angle = angle
 		self.vel = vel
-		
+
 		# Load drone image
 		self.drone_image = drone_image
 		self.drone = pygame.image.load('Imagens/drone_resized.png')
@@ -291,6 +315,13 @@ class Drone_Control:
 
 			self.position = [self.posH, self.posV]
 			self.drone.drone_update(self.position, self.angle)
+
+			################
+			global position_, angle_, velocidade
+			position_ = (self.posH, self.posV)
+			angle_ = self.angle
+			velocidade = (self.v1, self.v2)
+
 			return True
 
 		else:
@@ -314,6 +345,7 @@ class Game:
 		global t, FPS
 		FPS = 600
 		auto_move = False
+		global mx_real, my_real
 		mx_real, my_real = 0, 0
 		while True:
 			self.clock.tick(FPS)  # Game FPS
@@ -337,6 +369,7 @@ class Game:
 				auto_move = self.control.mouse_control(mx_real, my_real)
 			else:
 				self.control.key_control()
+
 
 			pygame.display.update()
 

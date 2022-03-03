@@ -3,6 +3,7 @@ from pygame.locals import *
 from sys import exit
 from PIL import Image
 from Jogo_V0 import *
+from Classes import Screen, Drone_Control, Drone, Game
 
 def main():
     # Tamanho da janela
@@ -69,8 +70,14 @@ def main():
         # Get click on image play
         if rect_image_play.collidepoint((mouse_x, mouse_y)):
             if click:
-                game() # Calls the function of the game in other file
-                #pass
+                # Background image
+                bg_image = 'Imagens/ghibli_background.jpg'
+                # Player Image
+                drone_image = 'Imagens/drone.png'
+
+                # Creating game class
+                game = Game(tela_larg, tela_alt, bg_image, drone_image)
+                game.run()
         # Get click on image credits
         if rect_image_credits.collidepoint((mouse_x, mouse_y)):
             if click:

@@ -1,9 +1,8 @@
 import pygame
-from pygame.locals import *
-from sys import exit
 from PIL import Image
-from Jogo_V0 import *
-from Classes import Screen, Drone_Control, Drone, Game
+from Classes import Game
+from sys import exit
+
 
 def main():
     # Tamanho da janela
@@ -32,7 +31,6 @@ def main():
     image = Image.open('Imagens/image_creditos.png')
     image = image.resize((image_credits_width, image_credits_height))
     image.save('Imagens/image_creditos_resized.png')
-
 
     # Load images
     background = pygame.image.load('Imagens/ghibli_background_main_resized.jpg')
@@ -87,11 +85,11 @@ def main():
 
         for event in pygame.event.get():
                 # To quit the game
-                if event.type == QUIT:
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
                 
-                if event.type == MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         click = True
 
@@ -176,14 +174,16 @@ def creditos():
 
         for event in pygame.event.get():
                 # To quit the game
-                if event.type == QUIT:
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
                 
-                if event.type == MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         click = True
 
         pygame.display.update()
 
-main()
+
+if __name__ == '__main__':
+    main()

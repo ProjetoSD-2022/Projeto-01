@@ -6,8 +6,6 @@ w_ = np.zeros([2, 1])  # comando de controle
 
 # Vetor dos erros de posição
 eP_ = np.zeros([2, 1])
-ePm1 = 0  # erro posição k-1 (passo anterior)
-eVm1 = 0  # erro atitude k-1 (passo anterior)
 
 # Constanstes do modelo
 m = 0.25  # massa
@@ -15,7 +13,6 @@ g = 9.81  # aceleração da gravidade
 l = 0.1  # tamanho
 kf = 1.744e-08  # constante de força
 Iz = 2e-4  # momento de inércia
-tal = 0.05
 Fg = np.array([-m * g])
 
 # Restrições do controle
@@ -23,8 +20,6 @@ phi_max = 15 * np.pi / 180.  # ângulo máximo
 w_max = 15000
 Fc_max = kf * w_max ** 2  # Força de controle máximo
 Tc_max = l * kf * w_max ** 2
-# Fc_min = 0.1 * Fc_max
-# Fc_max = 0.9 * Fc_max
 
 # PARÂMETROS DE SIMULAÇÃO
 h = 4e-3  # passo da simulação de tempo continuo
@@ -55,7 +50,6 @@ def x_dot(t, x, w_):
     # print('x: ', x)
     # print('w_: ', w_)
     # Parâmetros
-    w_max = 15000.  # velocidade máxima do motor
     m = 0.25  # massa
     g = 9.81  # aceleração da gravidade
     l = 0.1  # tamanho
@@ -88,7 +82,7 @@ def x_dot(t, x, w_):
     w_dot = (-w + w_) / tal
     r_dot = v
     v_dot = (1 / m) * (D_RB @ Fc_B + Fg)
-    v_dot = v_dot.reshape(2, )
+    v_dot = v_dot.reshape(2,)
     phi_dot = np.array([ome])
     ome_dot = np.array([Tc / Iz])
     xkp1 = np.concatenate([w_dot, r_dot, v_dot, phi_dot, ome_dot])
@@ -120,11 +114,6 @@ def execute_PID(x, destino, t):
     eP_ = eP
     # print(eP, eV)
 
-    '''# Definição do próximo waypoint
-    if np.linalg.norm(eP) < .1 and r_ID < (r_IDN):
-        r_ID += 1
-        print("Bucar Waypoint: ", r_ID)'''
-
     Fx = kpP * eP[0] + kdP * eV[0]
     Fy = kpP * eP[1] + kdP * eV[1] - Fg
     Fy = np.maximum(0.2 * Fc_max, np.minimum(Fy, 0.8 * Fc_max))
@@ -145,8 +134,8 @@ def execute_PID(x, destino, t):
     f12 = np.array([Fc / 2.0, Fc / 2.0])
 
     # Constantes Kp e Kd
-    kpA = np.array([2])
-    kdA = np.array([2])
+    kpA = np.array([0.75])
+    kdA = np.array([0.05])
     ePhi = phi_ - phi_k
     eOme = 0 - ome_k
     Tc = kpA * ePhi + kdA * eOme
@@ -175,7 +164,6 @@ def execute_PID(x, destino, t):
     w_ = np.array([w1, w2])
 
     # Simulação um passo a frente
-    #x = x_dot(t, x, w_)
     x = rk4(t, h, x, w_)
     x = rk4(t, h, x, w_)
     x = rk4(t, h, x, w_)

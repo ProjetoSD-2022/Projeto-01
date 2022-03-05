@@ -1,4 +1,4 @@
-from Classes import Screen, Drone_Control, Drone, Game
+from Classes import Game
 
 # Screen size
 larg = 1000

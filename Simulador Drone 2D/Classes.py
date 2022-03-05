@@ -2,7 +2,6 @@ import pygame
 from pygame.locals import *
 from sys import exit
 from PIL import Image
-import math
 from PID import execute_PID
 import numpy as np
 
@@ -13,6 +12,7 @@ global position_, angle_, velocidade
 position_ = 0
 angle_ = 0
 velocidade = 0
+
 
 class Screen:
 	def __init__(self, larg, alt, bg_image):
@@ -26,8 +26,6 @@ class Screen:
 		self.larg = larg
 		self.alt = alt
 		self.screen = pygame.display.set_mode((self.larg, self.alt))
-
-
 
 	def resize_screen_image(self):
 		# Resizing background image to match the screen size
@@ -124,21 +122,6 @@ class Drone_Control:
 		self.xlim = larg - self.drone.tamX / 2
 		self.ylim = alt - self.drone.tamY / 2
 		self.keys = 0
-		# Boost control
-		self.v_max = 18  # cm/s (1 px = 1 cm)
-		self.vel_vertical = 0
-		self.vel_horizontal = 0
-		# Boost Impulse
-		self.F = 0
-		self.Fx = 0
-		self.Fy = 0
-		# Drone's weight
-		self.m = 0.25
-		self.g = 9.81
-		self.P = self.m * self.g * 31
-		# Auto gravity control
-		self.steady = False
-		self.y_direction = 0  # changes the y direction to + or - depending on the direction key pressed
 
 		# Initializing control parameters
 		self.w1 = 0
@@ -153,134 +136,6 @@ class Drone_Control:
 							self.ang_vel * np.pi / 180.])
 		self.eP = np.array([1, 1])  # Position error
 		self.ePhi = 2  # angle error
-
-	def move(self):
-		self.real_pos = {'x': -(larg / 2 - self.posH), 'y': alt - 100. - self.posV}
-		# Gets the keys that are being pressed        
-		self.keys = pygame.key.get_pressed()
-		self.left_button()
-		self.right_button()
-		self.auto_stabilize()
-
-		if self.steady:
-			if not self.up_button() and not self.down_button():
-				self.y_direction = 0
-
-		self.acelerate()
-		self.rotate()
-		self.resulting_speed()
-		
-		self.position = [self.posH, self.posV]
-		self.drone.drone_update(self.position, self.angle)
-
-		self.x = np.array([self.w1, self.w2,
-						self.real_pos['x'], self.real_pos['y'],
-						self.v1, self.v2,
-						self.angle * np.pi / 180.,
-						self.ang_vel * np.pi / 180.])
-
-	def left_button(self):
-		if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
-			self.posH -= self.vel
-
-	def right_button(self):
-		if self.keys[pygame.K_RIGHT] or self.keys[pygame.K_d]:
-			self.posH += self.vel
-
-	def up_button(self):
-		if self.keys[pygame.K_UP] or self.keys[pygame.K_w]:
-			self.y_direction = -1
-			return True
-		return False
-
-	def down_button(self):
-		if self.keys[pygame.K_DOWN] or self.keys[pygame.K_s]:
-			self.y_direction = 1
-			return True
-		return False
-
-	def auto_stabilize(self):
-		if self.keys[K_f]:
-			self.steady = True
-		if self.keys[K_g]:
-			self.steady = False
-
-	def rotate(self):
-		if self.keys[pygame.K_q]:
-			self.angle += 150/FPS
-
-		if self.keys[pygame.K_e]:
-			self.angle -= 150/FPS
-
-		# Limit the max angle to 35°
-		if self.angle >= 35:
-			self.angle = 35
-		if self.angle <= -35:
-			self.angle = -35
-
-		# Rotating drone
-		self.drone_rotated = pygame.transform.rotate(self.drone.drone, self.angle)
-
-	def acelerate(self):
-		if self.keys[K_SPACE]:
-			# boost control, hold space to activate drone boost
-			self.F += 100 * t
-			if self.F >= 155:
-				self.F = 155
-		else:
-			# when space is released, the boost is slowly decreased
-			self.F -= 100 * t
-			if self.F <= 0:
-				self.F = 0
-
-	def resulting_speed(self):
-		# FORCE
-		self.Fx = self.F * math.sin(self.angle * math.pi / 180)
-
-		if not self.steady:
-			self.Fy = self.F * math.cos(self.angle * math.pi / 180)
-			self.vel -= 0.05
-			if self.vel <= 0:
-				self.vel = 0
-		else:
-			self.vel = 10
-			if self.Fy < self.P:
-				self.Fy += 50 * t
-			if self.Fy > self.P:
-				self.Fy -= 50 * t
-			if self.P - 1 < self.Fy < self.P + 1:
-				self.Fy = self.P
-
-		ay = (self.Fy - self.P) / self.m
-		ax = self.Fx / self.m
-
-		vel_vertical = -ay * t + self.vel * self.y_direction * math.cos(self.angle * math.pi / 180)
-		vel_horizontal = -ax * t - self.vel * math.sin(self.angle * math.pi / 180)
-
-		if vel_vertical >= 10:
-			vel_vertical = 10
-		elif vel_vertical <= -10:
-			vel_vertical = -10
-
-		if vel_horizontal >= 10:
-			vel_horizontal = 10
-		elif vel_horizontal <= -10:
-			vel_horizontal = -10
-
-		self.posV += vel_vertical
-		self.posH += vel_horizontal
-
-		# Limit the ground border
-		if self.posV >= self.ylim:
-			self.posV = self.ylim
-		if self.posV <= self.drone_rotated.get_height() / 2:
-			self.posV = self.drone_rotated.get_height() / 2
-
-		# Limit the left and right borders
-		if self.posH >= self.xlim:
-			self.posH = self.xlim
-		if self.posH <= self.drone_rotated.get_width() / 2:
-			self.posH = self.drone_rotated.get_width() / 2
 
 	def key_control(self):
 		self.keys = pygame.key.get_pressed()
@@ -318,10 +173,9 @@ class Drone_Control:
 
 			################
 			global position_, angle_, velocidade
-			position_ = (self.posH, self.posV)
+			position_ = (self.x[2], self.x[3])
 			angle_ = self.angle
 			velocidade = (self.v1, self.v2)
-
 			return True
 
 		else:
@@ -329,6 +183,7 @@ class Drone_Control:
 			self.posH, self.posV = self.x[2] + larg / 2, alt - 100 - self.x[3]
 			self.eP = np.array([destiny_x - self.real_pos['x'], destiny_y - self.real_pos['y']])
 			self.drone.drone_update(self.position, self.angle)
+			print('oi')
 			return False
 
 
@@ -363,13 +218,12 @@ class Game:
 					auto_move = True
 					mx, my = pygame.mouse.get_pos()
 					mx_real, my_real = -(larg / 2 - mx), alt - 100 - my
-					print(mx_real, my_real)
+					# print(mx_real, my_real)
 
 			if auto_move:
 				auto_move = self.control.mouse_control(mx_real, my_real)
 			else:
 				self.control.key_control()
-
 
 			pygame.display.update()
 

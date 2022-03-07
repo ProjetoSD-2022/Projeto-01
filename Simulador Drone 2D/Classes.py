@@ -44,19 +44,19 @@ class Screen:
 			# Fonte 
 			fonte = pygame.font.SysFont('arial', 15, True, True)
 			# Destino
-			texto = f'Destino do drone: ({mx_real}, {my_real})'
+			texto = f'Destino do drone: ({mx_real:.2f}, {my_real:.2f})'
 			texto_formatado = fonte.render(texto, True, (255, 255, 255))
 			self.screen.blit(texto_formatado, (10, 10))
 			# Posição Atual
-			texto = f'Posição atual: {position_}'
+			texto = f'Posição atual: ({position_})'
 			texto_formatado = fonte.render(texto, True, (255, 255, 255))
 			self.screen.blit(texto_formatado, (10, 30))
 			# Velocidade Atual
-			texto = f'Velocidade atual: {velocidade}'
+			texto = f'Velocidade atual: ({velocidade})'
 			texto_formatado = fonte.render(texto, True, (255, 255, 255))
 			self.screen.blit(texto_formatado, (10, 50))
 			# Angulo Atual
-			texto = f'Ângulo: {angle_}'
+			texto = f'Ângulo: {angle_:.2f}'
 			texto_formatado = fonte.render(texto, True, (255, 255, 255))
 			self.screen.blit(texto_formatado, (10, 70))
 
@@ -157,25 +157,28 @@ class Drone_Control:
 		return self.pid_control(destiny_x, destiny_y)
 
 	def pid_control(self, destiny_x, destiny_y):
+		self.real_pos = {'x': -(larg / 2 - self.posH), 'y': alt - 100 - self.posV}
 		self.eP = np.array([destiny_x - self.real_pos['x'], destiny_y - self.real_pos['y']])
 		if np.abs(self.eP[0]) > 0.2 or np.abs(self.eP[1]) > 0.2 or np.abs(self.ePhi) > 0.1:
 			self.x, self.eP, self.ePhi = execute_PID(self.x, [destiny_x, destiny_y], t)
 			# Converting from real coordinate to screen coordinate
 			self.posH, self.posV = self.x[2] + larg / 2, alt - 100 - self.x[3]
 
+			# Updating state vector
 			self.angle = self.x[6]*180/np.pi
 			self.v1, self.v2 = self.x[4], self.x[5]
 			self.w1, self.w2 = self.x[0], self.x[1]
 			self.ang_vel = self.x[7]
 
+			# Updating drone's pixel position and angle
 			self.position = [self.posH, self.posV]
 			self.drone.drone_update(self.position, self.angle)
 
-			################
+			################ Printing drone's status
 			global position_, angle_, velocidade
-			position_ = (self.x[2], self.x[3])
+			position_ = (round(self.x[2], 2), round(self.x[3], 2))
 			angle_ = self.angle
-			velocidade = (self.v1, self.v2)
+			velocidade = (round(self.v1, 2), round(self.v2, 2))
 			return True
 
 		else:
@@ -183,7 +186,6 @@ class Drone_Control:
 			self.posH, self.posV = self.x[2] + larg / 2, alt - 100 - self.x[3]
 			self.eP = np.array([destiny_x - self.real_pos['x'], destiny_y - self.real_pos['y']])
 			self.drone.drone_update(self.position, self.angle)
-			print('oi')
 			return False
 
 
@@ -214,9 +216,10 @@ class Game:
 					exit()
 					
 				if event.type == pygame.MOUSEBUTTONDOWN:
-					# Get the destiny's position from mouse click
 					auto_move = True
+					# Get the destiny's position from mouse click
 					mx, my = pygame.mouse.get_pos()
+					# Transform the mouse click point in real coordinates
 					mx_real, my_real = -(larg / 2 - mx), alt - 100 - my
 					# print(mx_real, my_real)
 
